@@ -12,10 +12,16 @@
 
 iPhoneのショートカットアプリから以下のURLにGETリクエストを送信：
 
-- 入室: `http://maru65536.com/lab_attendance/api/lab-entry?action=enter`
-- 退室: `http://maru65536.com/lab_attendance/api/lab-entry?action=exit`
+- 入室: `https://maru65536.com/lab_attendance/api/lab-entry?action=enter`
+- 退室: `https://maru65536.com/lab_attendance/api/lab-entry?action=exit`
 
 ## デプロイ
+
+### 前提条件
+- AWS CLI設定済み
+- Terraform インストール済み
+- SSH鍵 (`~/.ssh/id_ed25519`) 設定済み
+- Cloudflareでドメイン設定済み（SSL: Flexible モード）
 
 ### 一発デプロイ
 ```bash
@@ -24,7 +30,7 @@ iPhoneのショートカットアプリから以下のURLにGETリクエスト�
 
 ### 手動デプロイ
 
-#### インフラ構築 (初回のみ)
+#### 1. インフラ構築 (初回のみ)
 ```bash
 cd terraform
 terraform init
@@ -32,27 +38,47 @@ terraform plan
 terraform apply
 ```
 
-#### アプリケーションデプロイ
+**注意**: `terraform output`でEC2のIPアドレスを確認し、以下の手順で使用してください。
+
+#### 2. アプリケーションデプロイ
+
+**Current EC2 IP**: `3.115.30.125`
+
 ```bash
 # Backend
 scp -i ~/.ssh/id_ed25519 -r backend/ ec2-user@3.115.30.125:/home/ec2-user/lab_attendance/
-ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 << 'EOF'
 cd lab_attendance/backend
+pkill -f "uvicorn main:app" || true
 pip3 install --user -r requirements.txt
-nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+nohup python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+EOF
 
 # Frontend
 scp -i ~/.ssh/id_ed25519 -r frontend/ ec2-user@3.115.30.125:/home/ec2-user/lab_attendance/
-ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 << 'EOF'
 cd lab_attendance/frontend
+pkill -f "next dev" || true
+rm -rf .next node_modules
 PATH=/usr/local/node/bin:$PATH npm install --no-optional
-PATH=/usr/local/node/bin:$PATH nohup npm run dev > /tmp/frontend.log 2>&1 &
+PATH=/usr/local/node/bin:$PATH nohup npm run dev -- -H 127.0.0.1 > /tmp/frontend.log 2>&1 &
+EOF
+
+# Nginx (初回のみ)
+scp -i ~/.ssh/id_ed25519 nginx-maru65536.conf ec2-user@3.115.30.125:/tmp/
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 << 'EOF'
+sudo amazon-linux-extras install nginx1 -y
+sudo cp /tmp/nginx-maru65536.conf /etc/nginx/conf.d/
+sudo nginx -t
+sudo systemctl start nginx
+sudo systemctl enable nginx
+EOF
 ```
 
 ## アクセス
 
-- **Website**: http://maru65536.com/lab_attendance/
-- **API**: http://maru65536.com/lab_attendance/api/status
+- **Website**: https://maru65536.com/lab_attendance/
+- **API**: https://maru65536.com/lab_attendance/api/status
 
 ## 開発環境の制約
 
@@ -72,10 +98,46 @@ ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'ps aux | grep -E "(uvicorn|next)
 ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'netstat -tlnp | grep -E ":(3000|8000)"'
 ```
 
+### サービス状態確認
+```bash
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'sudo systemctl status nginx'
+curl -I https://maru65536.com/lab_attendance/
+curl https://maru65536.com/lab_attendance/api/status
+```
+
 ### ログ確認
 ```bash
 ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'tail -f /tmp/backend.log'
 ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'tail -f /tmp/frontend.log'
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'sudo tail -f /var/log/nginx/error.log'
+```
+
+### よくある問題と対処法
+
+#### Node.js バージョン問題
+```bash
+# Node.js 12.22.9 インストール確認
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 '/usr/local/node/bin/node --version'
+
+# 手動インストール（必要に応じて）
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 << 'EOF'
+cd /tmp
+wget https://nodejs.org/download/release/v12.22.9/node-v12.22.9-linux-x64.tar.gz
+tar -xzf node-v12.22.9-linux-x64.tar.gz
+sudo mkdir -p /usr/local/node
+sudo mv node-v12.22.9-linux-x64/* /usr/local/node/
+EOF
+```
+
+#### フロントエンドキャッシュ問題
+```bash
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 << 'EOF'
+cd lab_attendance/frontend
+pkill -f "next dev" || true
+rm -rf .next node_modules
+PATH=/usr/local/node/bin:$PATH npm install --no-optional
+PATH=/usr/local/node/bin:$PATH nohup npm run dev -- -H 127.0.0.1 > /tmp/frontend.log 2>&1 &
+EOF
 ```
 
 ## API仕様

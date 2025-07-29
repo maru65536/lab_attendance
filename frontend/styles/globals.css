@@ -83,77 +83,96 @@ body {
   display: flex;
   gap: 20px;
   margin-bottom: 30px;
-  overflow-x: auto;
-  padding-bottom: 10px;
+  overflow-y: auto;
+  max-height: 800px;
 }
 
-.time-axis {
+/* 縦軸の日付 */
+.date-axis-vertical {
   display: flex;
   flex-direction: column;
-  min-width: 60px;
-  padding-top: 40px; /* 日付軸の分だけずらす */
-  height: 600px; /* 24時間 × 25px */
+  width: 120px; /* 固定幅を設定 */
+  min-width: 120px;
+  padding-top: 45px; /* 時間軸の高さ分を調整 */
+  flex-shrink: 0; /* 縮小を防止 */
 }
 
-.time-label {
-  height: 24px; /* 1時間あたりの高さ */
+.date-label-vertical {
+  height: 30px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
-  font-size: 0.7rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: #475569;
   font-weight: 500;
-  padding-right: 10px;
-  border-right: 1px solid #f1f5f9;
+  padding-right: 15px;
+  border-right: 2px solid #f1f5f9;
+  margin-bottom: 2px;
+  width: 100%; /* 親の幅を使用 */
+}
+
+.date-text {
+  text-align: right;
+  line-height: 1.2;
+  white-space: nowrap; /* 改行を防止 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 60px; /* 最小幅を確保 */
+}
+
+.total-time {
+  font-size: 0.6rem;
+  color: #64748b;
+  margin-left: 5px;
+  white-space: nowrap;
 }
 
 .chart-main {
   flex: 1;
-  min-width: 800px;
+  min-height: 600px;
 }
 
-.date-axis {
+/* 横軸の時間 */
+.time-axis-horizontal {
   display: flex;
-  margin-bottom: 10px;
   height: 40px;
+  margin-bottom: 5px;
+  border-bottom: 2px solid #f1f5f9;
 }
 
-.date-label {
+.time-label-horizontal {
   flex: 1;
   text-align: center;
-  font-size: 0.75rem;
-  color: #475569;
+  font-size: 0.7rem;
+  color: #64748b;
   font-weight: 500;
-  padding: 0 4px;
-  border-bottom: 2px solid #f1f5f9;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 5px;
+  border-left: 1px solid #f8fafc;
+}
+
+.time-label-horizontal:first-child {
+  border-left: none;
+}
+
+/* データグリッド - 横バー */
+.data-grid-horizontal {
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
-.total-time {
-  font-size: 0.65rem;
-  color: #64748b;
-  margin-top: 2px;
-  font-weight: 400;
-}
-
-.data-grid {
-  display: flex;
-  height: 600px; /* 24時間 × 25px */
+.day-row {
+  height: 30px;
   position: relative;
-}
-
-.day-column {
-  flex: 1;
-  position: relative;
-  margin: 0 1px;
+  margin-bottom: 2px;
   border: 1px solid #f1f5f9;
   border-radius: 4px;
   background: #fafbfc;
 }
 
-.time-bar {
+.time-bar-horizontal {
   position: relative;
   width: 100%;
   height: 100%;
@@ -162,17 +181,17 @@ body {
 .session-bar {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   border-radius: 4px;
-  margin: 0 2px;
+  margin: 2px 0;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
   cursor: pointer;
   transition: all 0.3s ease;
-  border-left: 2px solid #1e40af;
-  border-right: 2px solid #1e40af;
+  border-top: 2px solid #1e40af;
+  border-bottom: 2px solid #1e40af;
 }
 
 .session-bar:hover {
   background: linear-gradient(135deg, #2563eb, #1e40af);
-  transform: scaleX(1.05);
+  transform: scaleY(1.1);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
   z-index: 10;
 }
@@ -180,8 +199,8 @@ body {
 /* 進行中セッションのスタイル */
 .session-bar.ongoing {
   background: linear-gradient(135deg, #10b981, #059669);
-  border-left: 2px solid #047857;
-  border-right: 2px solid #047857;
+  border-top: 2px solid #047857;
+  border-bottom: 2px solid #047857;
   animation: pulse 2s infinite;
 }
 
@@ -214,6 +233,13 @@ body {
   color: #64748b;
   font-size: 1rem;
   font-weight: 500;
+}
+
+.auto-update-info {
+  color: #94a3b8 !important;
+  font-size: 0.85rem !important;
+  font-weight: 400 !important;
+  font-style: italic;
 }
 
 .refresh-button, .retry-button {
@@ -345,27 +371,41 @@ body {
     gap: 15px;
   }
   
-  .time-axis {
-    min-width: 50px;
-    height: 480px;
+  .date-axis-vertical {
+    width: 100px; /* モバイル用固定幅 */
+    min-width: 100px;
+    padding-top: 35px;
+    flex-shrink: 0;
   }
   
-  .time-label {
-    font-size: 0.6rem;
-    height: 19px;
-  }
-  
-  .date-label {
+  .date-label-vertical {
+    height: 25px;
     font-size: 0.65rem;
+    padding-right: 10px;
+    width: 100%;
+  }
+  
+  .date-text {
+    min-width: 50px;
+    white-space: nowrap;
+  }
+  
+  .time-axis-horizontal {
+    height: 30px;
+  }
+  
+  .time-label-horizontal {
+    font-size: 0.6rem;
+  }
+  
+  .day-row {
+    height: 25px;
   }
   
   .total-time {
     font-size: 0.55rem;
   }
   
-  .data-grid {
-    height: 480px;
-  }
   
   .stats {
     gap: 12px;

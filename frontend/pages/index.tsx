@@ -34,9 +34,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [tooltip, setTooltip] = useState<{x: number, y: number, content: string, visible: boolean}>({
-    x: 0, y: 0, content: '', visible: false
-  })
 
   // UTC時間をJSTに変換する関数
   const toJST = (utcTimeString: string): Date => {
@@ -52,8 +49,8 @@ export default function Home() {
     
     const enterTime = toJST(status.last_action_time)
     const diffMs = currentTime.getTime() - enterTime.getTime()
-    const diffMinutes = Math.floor(diffMs / (1000 * 60))
-    const hours = Math.floor(diffMinutes / 60)
+    const diffMinutes = safeFloor(diffMs / (1000 * 60))
+    const hours = safeFloor(diffMinutes / 60)
     const minutes = diffMinutes % 60
     
     if (hours > 0) {
@@ -63,20 +60,30 @@ export default function Home() {
     }
   }
 
-  // ツールチップハンドラー
-  const handleMouseEnter = (event: React.MouseEvent, content: string) => {
-    const rect = event.currentTarget.getBoundingClientRect()
-    setTooltip({
-      x: rect.left + rect.width / 2,
-      y: rect.top - 10,
-      content,
-      visible: true
-    })
+  // 安全な時刻フォーマット関数
+  const formatTime = (date: Date): string => {
+    try {
+      return date.toLocaleTimeString('ja-JP', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch (error) {
+      // フォールバック - padStartを使わない
+      const hours = date.getHours()
+      const minutes = date.getMinutes()
+      return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}`
+    }
   }
 
-  const handleMouseLeave = () => {
-    setTooltip(prev => ({ ...prev, visible: false }))
+  // 安全なMath.floor関数
+  const safeFloor = (num: number): number => {
+    try {
+      return Math.floor(num)
+    } catch (error) {
+      return parseInt(num.toString().split('.')[0], 10) || 0
+    }
   }
+
 
   // データを取得する関数
   const fetchData = async () => {
@@ -134,7 +141,7 @@ export default function Home() {
           // 完了したセッション
           const exitTime = toJST(nextLog.timestamp)
           const date = enterTime.toISOString().split('T')[0]
-          const duration = Math.round((exitTime.getTime() - enterTime.getTime()) / (1000 * 60))
+          const duration = safeFloor((exitTime.getTime() - enterTime.getTime()) / (1000 * 60) + 0.5)
           
           if (!sessionsByDate[date]) {
             sessionsByDate[date] = {
@@ -153,7 +160,7 @@ export default function Home() {
         } else if (i === logs.length - 1 && status?.current_status === 'enter') {
           // 現在進行中のセッション（最後のenterで、現在在室中の場合）
           const date = enterTime.toISOString().split('T')[0]
-          const duration = Math.round((currentTime.getTime() - enterTime.getTime()) / (1000 * 60))
+          const duration = safeFloor((currentTime.getTime() - enterTime.getTime()) / (1000 * 60) + 0.5)
           
           if (!sessionsByDate[date]) {
             sessionsByDate[date] = {
@@ -173,9 +180,9 @@ export default function Home() {
       }
     }
     
-    // 過去30日分のデータを生成（データがない日も含む）
+    // 過去30日分のデータを生成（データがない日も含む、新しい日が先頭）
     const sessions: AttendanceSession[] = []
-    for (let i = 29; i >= 0; i--) {
+    for (let i = 0; i < 30; i++) {
       const date = new Date()
       date.setDate(date.getDate() - i)
       const dateStr = date.toISOString().split('T')[0]
@@ -223,7 +230,14 @@ export default function Home() {
             </span>
             {status.last_action_time && (
               <span className="last-action">
-                最終更新: {toJST(status.last_action_time).toLocaleString('ja-JP')}
+                最終更新: {(() => {
+                  try {
+                    return toJST(status.last_action_time).toLocaleString('ja-JP')
+                  } catch (error) {
+                    const date = toJST(status.last_action_time)
+                    return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${formatTime(date)}`
+                  }
+                })()}
               </span>
             )}
             {status.current_status === 'enter' && (
@@ -237,42 +251,51 @@ export default function Home() {
 
       <main className="main">
         <div className="chart-container">
-          {/* 時間軸（縦軸） */}
-          <div className="time-axis">
-            {Array.from({ length: 25 }, (_, hour) => (
-              <div key={hour} className="time-label">
-                {hour === 24 ? '24:00' : `${hour.toString().padStart(2, '0')}:00`}
+          {/* 日付軸（縦軸） */}
+          <div className="date-axis-vertical">
+            {attendanceSessions.map((session) => (
+              <div key={session.date} className="date-label-vertical">
+                <div className="date-text">
+                  {(() => {
+                    try {
+                      return new Date(session.date).toLocaleDateString('ja-JP', {
+                        month: 'short',
+                        day: 'numeric'
+                      })
+                    } catch (error) {
+                      const date = new Date(session.date)
+                      return `${date.getMonth() + 1}/${date.getDate()}`
+                    }
+                  })()}
+                </div>
+                <div className="total-time">
+                  {safeFloor(session.totalMinutes / 60)}h{session.totalMinutes % 60}m
+                </div>
               </div>
             ))}
           </div>
           
           {/* メインチャート */}
           <div className="chart-main">
-            {/* 日付軸（横軸） */}
-            <div className="date-axis">
-              {attendanceSessions.map((session) => (
-                <div key={session.date} className="date-label">
-                  {new Date(session.date).toLocaleDateString('ja-JP', {
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                  <div className="total-time">
-                    {Math.floor(session.totalMinutes / 60)}h{session.totalMinutes % 60}m
-                  </div>
+            {/* 時間軸（横軸） */}
+            <div className="time-axis-horizontal">
+              {Array.from({ length: 25 }, (_, hour) => (
+                <div key={hour} className="time-label-horizontal">
+                  {hour === 24 ? '24' : hour.toString()}
                 </div>
               ))}
             </div>
             
-            {/* データグリッド - 連続バー表示 */}
-            <div className="data-grid">
+            {/* データグリッド - 横バー表示 */}
+            <div className="data-grid-horizontal">
               {attendanceSessions.map((session) => (
-                <div key={session.date} className="day-column">
-                  <div className="time-bar">
+                <div key={session.date} className="day-row">
+                  <div className="time-bar-horizontal">
                     {session.sessions.map((sessionData, index) => {
                       const startHour = sessionData.startTime.getHours() + sessionData.startTime.getMinutes() / 60
                       const endHour = sessionData.endTime.getHours() + sessionData.endTime.getMinutes() / 60
-                      const height = ((endHour - startHour) / 24) * 100
-                      const top = (startHour / 24) * 100
+                      const width = ((endHour - startHour) / 24) * 100
+                      const left = (startHour / 24) * 100
                       
                       // 進行中のセッションかどうかを判定
                       const isOngoing = status?.current_status === 'enter' && 
@@ -284,21 +307,12 @@ export default function Home() {
                           className={`session-bar ${isOngoing ? 'ongoing' : ''}`}
                           style={{
                             position: 'absolute',
-                            top: `${top}%`,
-                            height: `${height}%`,
-                            left: '0',
-                            right: '0',
+                            left: `${left}%`,
+                            width: `${width}%`,
+                            top: '0',
+                            bottom: '0',
                           }}
-                          onMouseEnter={(e) => handleMouseEnter(e, 
-                            `${session.date}\n${sessionData.startTime.toLocaleTimeString('ja-JP', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })} - ${isOngoing ? '進行中' : sessionData.endTime.toLocaleTimeString('ja-JP', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}\n${isOngoing ? '現在の' : ''}滞在時間: ${Math.floor(sessionData.duration / 60)}時間${sessionData.duration % 60}分`
-                          )}
-                          onMouseLeave={handleMouseLeave}
+                          title={`${session.date}\n${formatTime(sessionData.startTime)} - ${isOngoing ? '進行中' : formatTime(sessionData.endTime)}\n${isOngoing ? '現在の' : ''}滞在時間: ${safeFloor(sessionData.duration / 60)}時間${sessionData.duration % 60}分`}
                         />
                       )
                     })}
@@ -312,50 +326,12 @@ export default function Home() {
         {attendanceData && (
           <div className="stats">
             <p>過去30日間の入退室記録: {attendanceData.count}件</p>
-            <p>総滞在時間: {Math.floor(attendanceSessions.reduce((sum, s) => sum + s.totalMinutes, 0) / 60)}時間</p>
-            <button onClick={fetchData} className="refresh-button">
-              最新データに更新
-            </button>
+            <p>総滞在時間: {safeFloor(attendanceSessions.reduce((sum, s) => sum + s.totalMinutes, 0) / 60)}時間</p>
+            <p className="auto-update-info">30秒ごとに自動更新</p>
           </div>
         )}
       </main>
 
-      {/* 固定ツールチップ */}
-      {tooltip.visible && (
-        <div
-          className="fixed-tooltip"
-          style={{
-            position: 'fixed',
-            left: `${tooltip.x}px`,
-            top: `${tooltip.y}px`,
-            transform: 'translateX(-50%)',
-            background: '#1e293b',
-            color: 'white',
-            padding: '10px 14px',
-            borderRadius: '8px',
-            whiteSpace: 'pre-line',
-            fontSize: '0.75rem',
-            zIndex: 9999,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            minWidth: '140px',
-            textAlign: 'center',
-            pointerEvents: 'none'
-          }}
-        >
-          {tooltip.content}
-          <div
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              borderLeft: '6px solid transparent',
-              borderRight: '6px solid transparent',
-              borderTop: '6px solid #1e293b'
-            }}
-          />
-        </div>
-      )}
     </div>
   )
 }
