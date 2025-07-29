@@ -3,21 +3,11 @@ const path = require('path')
 
 const nextConfig = {
   reactStrictMode: true,
-  basePath: '/lab_attendance',
-  assetPrefix: '/lab_attendance',
-  trailingSlash: true,
   webpack: (config) => {
     config.resolve.alias['@'] = path.join(__dirname)
     return config
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*',
-      },
-    ]
-  },
+  // nginx でAPIプロキシを処理するため、Next.jsのrewriteは無効化
 }
 
 module.exports = nextConfig

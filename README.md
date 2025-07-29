@@ -1,201 +1,101 @@
-# 研究室滞在時間可視化アプリ
+# Lab Attendance App
 
-iPhoneからの入室・退室通知を受け取り、研究室滞在時間を可視化するWebアプリケーション
+研究室滞在時間を可視化するWebアプリケーション
 
-## システム構成
+## 構成
 
-- **Backend**: FastAPI (Python)
-- **Frontend**: Next.js (React/TypeScript)
-- **Database**: SQLite
-- **Infrastructure**: AWS EC2
-- **Web Server**: nginx
-- **Domain**: maru65536.com
+- **Backend**: FastAPI + SQLite
+- **Frontend**: Next.js 10.2.3 + React 17 + TypeScript
+- **Infrastructure**: AWS EC2 (t2.micro) + Terraform
 
-## 機能
+## iPhone連携
 
-### API機能
-- `/api/lab-entry` - 入退室記録（POST/GET両対応）
-- `/api/attendance-data` - 滞在データ取得
-- `/api/status` - 現在の在室状況
+iPhoneのショートカットアプリから以下のURLにGETリクエストを送信：
 
-### フロントエンド機能
-- 30日×24時間のヒートマップ表示
-- リアルタイム在室状況表示
-- レスポンシブデザイン
+- 入室: `http://maru65536.com/lab_attendance/api/lab-entry?action=enter`
+- 退室: `http://maru65536.com/lab_attendance/api/lab-entry?action=exit`
 
-## デプロイ方法
+## デプロイ
 
-### 1. EC2インスタンスでの初回デプロイ
-
+### 一発デプロイ
 ```bash
-# GitHubからクローン（ユーザー名を指定）
-cd /home/ec2-user
-git clone https://github.com/YOUR_USERNAME/lab-attendance-app.git
-cd lab-attendance-app
-
-# デプロイスクリプトを実行
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh YOUR_USERNAME
+./deploy.sh
 ```
 
-### 2. nginx設定
+### 手動デプロイ
 
+#### インフラ構築 (初回のみ)
 ```bash
-# nginx設定ファイルをコピー
-sudo cp nginx/lab-attendance.conf /etc/nginx/conf.d/
-sudo nginx -t
-sudo systemctl restart nginx
+cd terraform
+terraform init
+terraform plan
+terraform apply
 ```
 
-### 3. SSL証明書設定（Let's Encrypt）
-
+#### アプリケーションデプロイ
 ```bash
-# certbotのインストール
-sudo yum install -y certbot python3-certbot-nginx
+# Backend
+scp -i ~/.ssh/id_ed25519 -r backend/ ec2-user@3.115.30.125:/home/ec2-user/lab_attendance/
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125
+cd lab_attendance/backend
+pip3 install --user -r requirements.txt
+nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
 
-# SSL証明書取得
-sudo certbot --nginx -d maru65536.com
-
-# 自動更新設定
-sudo crontab -e
-# 以下を追加：
-# 0 12 * * * /usr/bin/certbot renew --quiet
+# Frontend
+scp -i ~/.ssh/id_ed25519 -r frontend/ ec2-user@3.115.30.125:/home/ec2-user/lab_attendance/
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125
+cd lab_attendance/frontend
+PATH=/usr/local/node/bin:$PATH npm install --no-optional
+PATH=/usr/local/node/bin:$PATH nohup npm run dev > /tmp/frontend.log 2>&1 &
 ```
 
-## 開発環境
+## アクセス
 
-### Backend開発
+- **Website**: http://maru65536.com/lab_attendance/
+- **API**: http://maru65536.com/lab_attendance/api/status
 
-```bash
-cd backend
-pip3 install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+## 開発環境の制約
 
-### Frontend開発
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-## API使用例
-
-### iPhone Shortcutsアプリから入室記録
-
-```bash
-# GET方式
-curl "http://maru65536.com/api/lab-entry?action=enter"
-
-# POST方式
-curl -X POST "http://maru65536.com/api/lab-entry" \
-     -H "Content-Type: application/json" \
-     -d '{"action": "enter"}'
-```
-
-### 退室記録
-
-```bash
-curl "http://maru65536.com/api/lab-entry?action=exit"
-```
-
-## ディレクトリ構造
-
-```
-lab-attendance-app/
-├── backend/
-│   ├── main.py              # FastAPIアプリケーション
-│   ├── requirements.txt     # Python依存関係
-│   └── attendance.db        # SQLiteデータベース（自動生成）
-├── frontend/
-│   ├── pages/
-│   │   ├── _app.tsx
-│   │   └── index.tsx        # メインページ
-│   ├── styles/
-│   │   └── globals.css      # スタイルシート
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── next.config.js
-├── scripts/
-│   └── deploy.sh            # デプロイスクリプト
-├── nginx/
-│   └── lab-attendance.conf  # nginx設定
-└── README.md
-```
-
-## サービス管理
-
-### サービス状況確認
-
-```bash
-sudo systemctl status lab-attendance-backend
-sudo systemctl status lab-attendance-frontend
-```
-
-### ログ確認
-
-```bash
-# バックエンドログ
-sudo journalctl -u lab-attendance-backend -f
-
-# フロントエンドログ
-sudo journalctl -u lab-attendance-frontend -f
-
-# nginxログ
-sudo tail -f /var/log/nginx/lab-attendance.access.log
-```
-
-### サービス再起動
-
-```bash
-sudo systemctl restart lab-attendance-backend
-sudo systemctl restart lab-attendance-frontend
-sudo systemctl reload nginx
-```
+- Node.js 12.22.9を使用（Amazon Linux 2のGLIBC制約のため）
+- Next.js 10.2.3を使用（Node.js 12対応のため）
+- React 17を使用（Next.js 10対応のため）
 
 ## トラブルシューティング
 
-### よくある問題
+### プロセス確認
+```bash
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'ps aux | grep -E "(uvicorn|next)" | grep -v grep'
+```
 
-1. **Node.jsが見つからない**
-   ```bash
-   source ~/.bashrc
-   nvm use 16
-   ```
+### ポート確認
+```bash
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'netstat -tlnp | grep -E ":(3000|8000)"'
+```
 
-2. **ポートが使用中**
-   ```bash
-   sudo lsof -i :8000
-   sudo lsof -i :3000
-   ```
+### ログ確認
+```bash
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'tail -f /tmp/backend.log'
+ssh -i ~/.ssh/id_ed25519 ec2-user@3.115.30.125 'tail -f /tmp/frontend.log'
+```
 
-3. **データベースファイルのアクセス権限**
-   ```bash
-   chmod 644 /var/www/lab-app/backend/attendance.db
-   ```
+## API仕様
 
-4. **nginxの設定エラー**
-   ```bash
-   sudo nginx -t
-   sudo systemctl status nginx
-   ```
+### POST /api/lab-entry
+入退室記録を保存
 
-## 開発者向け情報
+**Request Body:**
+```json
+{
+  "action": "enter" | "exit"
+}
+```
 
-### 重複アクション処理
-- 連続する同じアクション（入室→入室、退室→退室）は無視
-- データベースレベルでの整合性チェック
+### GET /api/lab-entry?action=enter|exit
+入退室記録を保存（iPhone用）
 
-### データ形式
-- タイムスタンプはサーバー側で自動生成
-- SQLiteを使用した軽量なデータ管理
+### GET /api/attendance-data?days=30
+過去30日間の滞在データを取得
 
-### セキュリティ
-- CORS設定によるクロスオリジン制御
-- nginxによるリバースプロキシ
-- SSL/TLS暗号化（Let's Encrypt）
+### GET /api/status
+現在の滞在状況を取得
 
-## ライセンス
-
-MIT License
