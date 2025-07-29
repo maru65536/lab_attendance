@@ -123,29 +123,6 @@ export default function Home() {
     return sessions
   }
 
-  // 時間範囲でのセッション情報を取得
-  const getSessionAtTime = (session: AttendanceSession, hour: number, minute: number): {
-    isActive: boolean
-    sessionInfo?: {
-      startTime: Date
-      endTime: Date
-      duration: number
-    }
-  } => {
-    const targetTime = new Date(session.date + `T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`)
-    
-    for (const sessionData of session.sessions) {
-      if (targetTime >= sessionData.startTime && targetTime <= sessionData.endTime) {
-        return {
-          isActive: true,
-          sessionInfo: sessionData
-        }
-      }
-    }
-    
-    return { isActive: false }
-  }
-
   const attendanceSessions = calculateAttendanceSessions()
 
   if (loading) {
@@ -190,9 +167,9 @@ export default function Home() {
         <div className="chart-container">
           {/* 時間軸（縦軸） */}
           <div className="time-axis">
-            {Array.from({ length: 24 }, (_, hour) => (
+            {Array.from({ length: 25 }, (_, hour) => (
               <div key={hour} className="time-label">
-                {hour.toString().padStart(2, '0')}:00
+                {hour === 24 ? '24:00' : `${hour.toString().padStart(2, '0')}:00`}
               </div>
             ))}
           </div>
@@ -214,24 +191,41 @@ export default function Home() {
               ))}
             </div>
             
-            {/* データグリッド */}
+            {/* データグリッド - 連続バー表示 */}
             <div className="data-grid">
-              {Array.from({ length: 24 }, (_, hour) => (
-                <div key={hour} className="hour-row">
-                  {attendanceSessions.map((session) => {
-                    const sessionInfo = getSessionAtTime(session, hour, 0)
-                    return (
-                      <div
-                        key={`${session.date}-${hour}`}
-                        className={`time-cell ${sessionInfo.isActive ? 'active' : 'inactive'}`}
-                        title={
-                          sessionInfo.isActive && sessionInfo.sessionInfo
-                            ? `${session.date} ${hour}:00 - 在室中\n${sessionInfo.sessionInfo.startTime.toLocaleTimeString('ja-JP')} - ${sessionInfo.sessionInfo.endTime.toLocaleTimeString('ja-JP')}\n滞在時間: ${Math.floor(sessionInfo.sessionInfo.duration / 60)}時間${sessionInfo.sessionInfo.duration % 60}分`
-                            : `${session.date} ${hour}:00 - 不在`
-                        }
-                      />
-                    )
-                  })}
+              {attendanceSessions.map((session) => (
+                <div key={session.date} className="day-column">
+                  <div className="time-bar">
+                    {session.sessions.map((sessionData, index) => {
+                      const startHour = sessionData.startTime.getHours() + sessionData.startTime.getMinutes() / 60
+                      const endHour = sessionData.endTime.getHours() + sessionData.endTime.getMinutes() / 60
+                      const height = ((endHour - startHour) / 24) * 100
+                      const top = (startHour / 24) * 100
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="session-bar"
+                          style={{
+                            position: 'absolute',
+                            top: `${top}%`,
+                            height: `${height}%`,
+                            left: '0',
+                            right: '0',
+                          }}
+                          title={
+                            `${session.date}\n${sessionData.startTime.toLocaleTimeString('ja-JP', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })} - ${sessionData.endTime.toLocaleTimeString('ja-JP', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}\n滞在時間: ${Math.floor(sessionData.duration / 60)}時間${sessionData.duration % 60}分`
+                          }
+                        />
+                      )
+                    })}
+                  </div>
                 </div>
               ))}
             </div>

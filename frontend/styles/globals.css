@@ -92,18 +92,19 @@ body {
   flex-direction: column;
   min-width: 60px;
   padding-top: 40px; /* 日付軸の分だけずらす */
+  height: 600px; /* 24時間 × 25px */
 }
 
 .time-label {
-  height: 30px;
+  height: 24px; /* 1時間あたりの高さ */
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: #64748b;
   font-weight: 500;
   padding-right: 10px;
-  border-right: 2px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
 }
 
 .chart-main {
@@ -139,50 +140,41 @@ body {
 
 .data-grid {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.hour-row {
-  display: flex;
-  gap: 2px;
-  height: 28px;
-}
-
-.time-cell {
-  flex: 1;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  cursor: pointer;
+  height: 600px; /* 24時間 × 25px */
   position: relative;
-  min-width: 20px;
 }
 
-.time-cell.active {
+.day-column {
+  flex: 1;
+  position: relative;
+  margin: 0 1px;
+  border: 1px solid #f1f5f9;
+  border-radius: 4px;
+  background: #fafbfc;
+}
+
+.time-bar {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.session-bar {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 4px;
+  margin: 0 2px;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-  transform: scale(1.02);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 2px solid #1e40af;
+  border-right: 2px solid #1e40af;
 }
 
-.time-cell.inactive {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.time-cell:hover {
-  transform: scale(1.05);
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.time-cell.active:hover {
+.session-bar:hover {
   background: linear-gradient(135deg, #2563eb, #1e40af);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
-}
-
-.time-cell.inactive:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  transform: scaleX(1.05);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  z-index: 10;
 }
 
 .stats {
@@ -249,7 +241,7 @@ body {
 }
 
 /* カスタムツールチップスタイル */
-.time-cell[title]:hover::after {
+.session-bar[title]:hover::after {
   content: attr(title);
   position: absolute;
   bottom: 100%;
@@ -264,9 +256,11 @@ body {
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   animation: tooltipFadeIn 0.2s ease-out;
+  min-width: 120px;
+  text-align: center;
 }
 
-.time-cell[title]:hover::before {
+.session-bar[title]:hover::before {
   content: '';
   position: absolute;
   bottom: 100%;
@@ -327,10 +321,12 @@ body {
   
   .time-axis {
     min-width: 50px;
+    height: 480px;
   }
   
   .time-label {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
+    height: 19px;
   }
   
   .date-label {
@@ -341,12 +337,8 @@ body {
     font-size: 0.55rem;
   }
   
-  .hour-row {
-    height: 24px;
-  }
-  
-  .time-cell {
-    min-width: 15px;
+  .data-grid {
+    height: 480px;
   }
   
   .stats {

@@ -5,7 +5,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*', // 開発時のAPI転送
+        destination: 'http://3.115.30.125:8000/api/:path*', // 本番環境のAPI URL
       },
     ]
   },
