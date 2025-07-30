@@ -43,7 +43,7 @@ ssh -i $SSH_KEY ec2-user@$EC2_HOST << 'EOF_FRONTEND'
 cd /home/ec2-user/lab_attendance/frontend
 
 # Kill existing frontend process
-ps aux | grep 'next dev' | grep -v grep | awk '{print $2}' | xargs kill -9 || true
+ps aux | grep -E '(next dev|next start)' | grep -v grep | awk '{print $2}' | xargs kill -9 || true
 
 # Setup Node.js 12 if not already installed
 if [ ! -d "/usr/local/node" ]; then
@@ -56,13 +56,14 @@ if [ ! -d "/usr/local/node" ]; then
     rm -f node-v12.22.9-linux-x64.tar.gz
 fi
 
-# Install dependencies and start frontend
+# Install dependencies and build frontend
 cd /home/ec2-user/lab_attendance/frontend
-rm -rf node_modules package-lock.json
+rm -rf node_modules package-lock.json .next
 PATH=/usr/local/node/bin:$PATH npm install --no-optional
-PATH=/usr/local/node/bin:$PATH nohup npm run dev -- -H 127.0.0.1 > /tmp/frontend.log 2>&1 &
+PATH=/usr/local/node/bin:$PATH npm run build
+PATH=/usr/local/node/bin:$PATH nohup npm run start -- -H 127.0.0.1 -p 3000 > /tmp/frontend.log 2>&1 &
 sleep 5
-echo "Frontend started on localhost:3000"
+echo "Frontend built and started on localhost:3000"
 EOF_FRONTEND
 
 # Setup nginx

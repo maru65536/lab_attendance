@@ -6,6 +6,9 @@ const nextConfig = {
   basePath: '/lab_attendance',
   assetPrefix: '/lab_attendance',
   trailingSlash: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  compress: true,
   webpack: (config) => {
     config.resolve.alias['@'] = path.join(__dirname)
     return config

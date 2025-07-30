@@ -121,6 +121,51 @@ export default function Home() {
     }
   }, [])
 
+  // JST日付文字列を取得する関数
+  const getJSTDateString = (date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  // 日付跨ぎセッションを分割する関数
+  const splitSessionAcrossDates = (startTime: Date, endTime: Date): { date: string, startTime: Date, endTime: Date, duration: number }[] => {
+    const sessions: { date: string, startTime: Date, endTime: Date, duration: number }[] = []
+    let currentStart = new Date(startTime)
+    
+    while (currentStart < endTime) {
+      // その日の終わり（23:59:59.999）を計算
+      const dayEnd = new Date(currentStart)
+      dayEnd.setHours(23, 59, 59, 999)
+      
+      // 次の日の始まり（0:00:00.000）を計算
+      const nextDayStart = new Date(currentStart)
+      nextDayStart.setDate(nextDayStart.getDate() + 1)
+      nextDayStart.setHours(0, 0, 0, 0)
+      
+      // セッションの終了時刻を決定（その日の終わりか、実際の終了時刻の早い方）
+      const sessionEnd = endTime <= dayEnd ? endTime : dayEnd
+      
+      // そのセッションの時間を計算
+      const duration = safeFloor((sessionEnd.getTime() - currentStart.getTime()) / (1000 * 60) + 0.5)
+      
+      if (duration > 0) {
+        sessions.push({
+          date: getJSTDateString(currentStart),
+          startTime: new Date(currentStart),
+          endTime: new Date(sessionEnd),
+          duration
+        })
+      }
+      
+      // 次の日の開始時刻に移動
+      currentStart = nextDayStart
+    }
+    
+    return sessions
+  }
+
   // 滞在セッションを計算する関数
   const calculateAttendanceSessions = (): AttendanceSession[] => {
     if (!attendanceData?.data || attendanceData.data.length === 0) {
@@ -140,42 +185,48 @@ export default function Home() {
         if (nextLog && nextLog.action === 'exit') {
           // 完了したセッション
           const exitTime = toJST(nextLog.timestamp)
-          const date = enterTime.toISOString().split('T')[0]
-          const duration = safeFloor((exitTime.getTime() - enterTime.getTime()) / (1000 * 60) + 0.5)
           
-          if (!sessionsByDate[date]) {
-            sessionsByDate[date] = {
-              date,
-              sessions: [],
-              totalMinutes: 0
+          // 日付跨ぎの場合は分割
+          const splitSessions = splitSessionAcrossDates(enterTime, exitTime)
+          
+          for (const session of splitSessions) {
+            if (!sessionsByDate[session.date]) {
+              sessionsByDate[session.date] = {
+                date: session.date,
+                sessions: [],
+                totalMinutes: 0
+              }
             }
+            
+            sessionsByDate[session.date].sessions.push({
+              startTime: session.startTime,
+              endTime: session.endTime,
+              duration: session.duration
+            })
+            sessionsByDate[session.date].totalMinutes += session.duration
           }
-          
-          sessionsByDate[date].sessions.push({
-            startTime: enterTime,
-            endTime: exitTime,
-            duration
-          })
-          sessionsByDate[date].totalMinutes += duration
         } else if (i === logs.length - 1 && status?.current_status === 'enter') {
           // 現在進行中のセッション（最後のenterで、現在在室中の場合）
-          const date = enterTime.toISOString().split('T')[0]
-          const duration = safeFloor((currentTime.getTime() - enterTime.getTime()) / (1000 * 60) + 0.5)
           
-          if (!sessionsByDate[date]) {
-            sessionsByDate[date] = {
-              date,
-              sessions: [],
-              totalMinutes: 0
+          // 日付跨ぎの場合は分割
+          const splitSessions = splitSessionAcrossDates(enterTime, currentTime)
+          
+          for (const session of splitSessions) {
+            if (!sessionsByDate[session.date]) {
+              sessionsByDate[session.date] = {
+                date: session.date,
+                sessions: [],
+                totalMinutes: 0
+              }
             }
+            
+            sessionsByDate[session.date].sessions.push({
+              startTime: session.startTime,
+              endTime: session.endTime,
+              duration: session.duration
+            })
+            sessionsByDate[session.date].totalMinutes += session.duration
           }
-          
-          sessionsByDate[date].sessions.push({
-            startTime: enterTime,
-            endTime: currentTime, // 現在時刻を終了時刻として使用
-            duration
-          })
-          sessionsByDate[date].totalMinutes += duration
         }
       }
     }
