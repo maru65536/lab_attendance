@@ -22,3 +22,5 @@ apps/**/.next/
 
 # Python
 __pycache__/
+
+apps/lab-attendance/.env

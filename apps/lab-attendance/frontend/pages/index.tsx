@@ -37,8 +37,16 @@ export default function Home() {
 
   // UTC時間をJSTに変換する関数
   const toJST = (utcTimeString: string): Date => {
-    // バックエンドから返される時刻をUTCとして解釈
-    return new Date(utcTimeString + 'Z')
+    // SQLiteは"YYYY-MM-DD HH:MM:SS"形式なのでISO8601に正規化してからUTCとして解釈
+    const normalized = utcTimeString.includes('T')
+      ? utcTimeString
+      : utcTimeString.replace(' ', 'T')
+    const iso = `${normalized}Z`
+    const parsed = new Date(iso)
+    if (Number.isNaN(parsed.getTime())) {
+      return new Date(normalized)
+    }
+    return parsed
   }
 
   // 在室時間を計算する関数
@@ -68,7 +76,7 @@ export default function Home() {
         minute: '2-digit'
       })
     } catch (error) {
-      // フォールバック - padStartを使わない
+      // フォールバック - padStartを使わずにゼロ埋め
       const hours = date.getHours()
       const minutes = date.getMinutes()
       return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}`

@@ -50,6 +50,20 @@ class AttendanceLog(BaseModel):
     action: str
     timestamp: str
 
+# SQLiteの日時文字列をISO 8601 (UTC) に変換
+def to_iso8601(timestamp_str: str) -> str:
+    try:
+        dt = datetime.datetime.fromisoformat(timestamp_str)
+    except ValueError:
+        try:
+            dt = datetime.datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return timestamp_str
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    return dt.astimezone(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 # 最後のアクションを取得する関数
 def get_last_action():
     conn = sqlite3.connect(DB_PATH)
@@ -147,7 +161,7 @@ async def get_attendance_data(days: int = 30):
         attendance_data.append({
             "id": row[0],
             "action": row[1],
-            "timestamp": row[2]
+            "timestamp": to_iso8601(row[2]) if row[2] else None
         })
     
     return {
@@ -173,7 +187,7 @@ async def get_status():
     if result:
         return {
             "current_status": result[0],
-            "last_action_time": result[1]
+            "last_action_time": to_iso8601(result[1]) if result[1] else None
         }
     else:
         return {
