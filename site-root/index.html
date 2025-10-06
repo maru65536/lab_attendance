@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>maru65536</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <h1>maru65536</h1>
+        <p class="hero__tagline">portfolio site</p>
+        <div class="hero__links">
+          <a class="button" href="https://github.com/maru65536" target="_blank" rel="noopener">GitHub</a>
+          <a class="button button--secondary" href="mailto:maru65536@gmail.com">Contact</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="section">
+        <h2>Featured Projects</h2>
+        <ul class="card-list">
+          <li class="card">
+            <h3>Lab Attendance</h3>
+            <p>研究室滞在時間を可視化する Web アプリ。</p>
+            <div class="card__actions">
+              <a href="/lab_attendance/" class="button">Open App</a>
+              <a href="https://github.com/maru65536?tab=repositories" class="button button--ghost" target="_blank" rel="noopener">Repository</a>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h2>Experiments &amp; Notes</h2>
+        <p>リンクを追加予定です。</p>
+        <div class="placeholder">
+          <span>Coming soon...</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>&copy; <span id="year"></span> Maru65536</span>
+    </footer>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
