@@ -46,3 +46,15 @@ variable "backup_bucket_name" {
   type        = string
   default     = "lab-attendance-backups"
 }
+
+variable "kbdir_bucket_name" {
+  description = "S3 bucket name for KBD-IR score photos"
+  type        = string
+  default     = "kbdir-prod"
+}
+
+variable "kbdir_domain" {
+  description = "SES verified domain for KBD-IR"
+  type        = string
+  default     = "maru65536.com"
+}
