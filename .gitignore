@@ -24,3 +24,6 @@ apps/**/.next/
 __pycache__/
 
 apps/lab-attendance/.env
+.env.su8ru_wish
+spec.md
+state_friend.json
