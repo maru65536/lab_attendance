@@ -4,13 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>maru65536</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header class="hero">
       <div class="hero__content">
         <h1>maru65536</h1>
-        <p class="hero__tagline">portfolio site</p>
         <div class="hero__links">
           <a class="button" href="https://github.com/maru65536" target="_blank" rel="noopener">GitHub</a>
           <a class="button button--secondary" href="mailto:maru65536@gmail.com">Contact</a>
@@ -19,28 +18,184 @@
     </header>
 
     <main class="container">
-      <section class="section">
-        <h2>Featured Projects</h2>
-        <ul class="card-list">
-          <li class="card">
-            <h3>Lab Attendance</h3>
-            <p>研究室滞在時間を可視化する Web アプリ。</p>
-            <div class="card__actions">
-              <a href="/lab_attendance/" class="button">Open App</a>
-              <a href="https://github.com/maru65536?tab=repositories" class="button button--ghost" target="_blank" rel="noopener">Repository</a>
+      <section class="section" id="about">
+        <div class="section__header">
+          <h2>About</h2>
+          <p class="section__lead">
+            コンピュータアーキテクチャを専攻する修士1年生で、分岐予測器に関する研究をしています。インターンや業務委託では、LLM関連のプロジェクトを中心に取り組んでいます。
+          </p>
+        </div>
+        <div class="about-grid">
+          <aside class="about-grid__details">
+            <div class="card">
+              <h3>Profile</h3>
+              <dl class="key-value">
+                <div>
+                  <dt>所属</dt>
+                  <dd>東京大学大学院 情報理工学系研究科 創造情報学専攻 修士1年</dd>
+                </div>
+                <div>
+                  <dt>研究テーマ</dt>
+                  <dd>分岐予測</dd>
+                </div>
+                <div>
+                  <dt>連絡先</dt>
+                  <dd><a href="mailto:maru65536@gmail.com">maru65536@gmail.com</a></dd>
+                </div>
+                <div>
+                  <dt>GitHub</dt>
+                  <dd><a href="https://github.com/maru65536" target="_blank" rel="noopener">github.com/maru65536</a></dd>
+                </div>
+                <div>
+                  <dt>AtCoder</dt>
+                  <dd><a href="https://atcoder.jp/users/maru65536" target="_blank" rel="noopener">atcoder.jp/users/maru65536</a></dd>
+                </div>
+              </dl>
             </div>
-          </li>
-        </ul>
-      </section>
-
-      <section class="section">
-        <h2>Experiments &amp; Notes</h2>
-        <p>リンクを追加予定です。</p>
-        <div class="placeholder">
-          <span>Coming soon...</span>
+          </aside>
         </div>
       </section>
-    </main>
+
+      <section class="section" id="experience">
+        <div class="section__header">
+          <h2>Experience</h2>
+        </div>
+        <ol class="timeline">
+          <li class="timeline__item">
+            <div class="timeline__meta">
+              <span class="timeline__period">2025.05 - Present</span>
+              <span class="timeline__role">AI Engineer / 株式会社KK Generation （業務委託）</span>
+            </div>
+            <p>業務委託として参画し、AIのPoCから精度改善、Webアプリとしての提供までを担当。</p>
+            <ul class="timeline__list">
+              <li>OCR, OpenCV, LLMを適切に組み合わせた精度改善</li>
+              <li>Next.js+FastAPI構成でのWebアプリ開発</li>
+              <li>terraformを用いたAWS環境の構築・管理</li>
+            </ul>
+          </li>
+          <li class="timeline__item">
+            <div class="timeline__meta">
+              <span class="timeline__period">2025.08 - 2025.09</span>
+              <span class="timeline__role">Intern / 富士通株式会社</span>
+            </div>
+            <p>夏季インターンに参加し、SystemVerilogを用いた浮動小数点演算器の設計・実装に取り組んだ。</p>
+          </li>
+          <li class="timeline__item">
+            <div class="timeline__meta">
+              <span class="timeline__period">2023.05 - 2025.04</span>
+              <span class="timeline__role">Algorithm Engineer Intern / 燈株式会社</span>
+            </div>
+            <p>長期インターンとして2年間に渡りLLM系・データ分析系のプロジェクトに従事。</p>
+            <ul class="timeline__list">
+              <li>Embedding モデルの Fine-Tuning</li>
+              <li>RAG システムの設計</li>
+              <li>Pydantic AI によるエージェントの構築</li>
+              <li>BigQuery を用いたデータ分析</li>
+            </ul>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="education">
+        <div class="section__header">
+          <h2>Education &amp; Research</h2>
+        </div>
+        <ol class="timeline">
+          <li class="timeline__item">
+            <div class="timeline__meta">
+              <span class="timeline__period">2025.04 - Present</span>
+              <span class="timeline__role">東京大学大学院 情報理工学系研究科 創造情報学専攻</span>
+            </div>
+            <p>修士課程に在籍し、Gem5やQEMU等を用いながら予測器の解析ツールを実装しています。</p>
+          </li>
+          <li class="timeline__item">
+            <div class="timeline__meta">
+              <span class="timeline__period">2021.03 - 2025.03</span>
+              <span class="timeline__role">慶應義塾大学 理工学部 数理科学科 数学専攻</span>
+            </div>
+            <p>純粋数学・数理統計学を専攻し、4年次の研究室配属は太田研究室でグラフ理論を研究しました。</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="skills">
+        <div class="section__header">
+          <h2>Skills</h2>
+        </div>
+        <div class="skill-grid">
+          <div class="skill-card">
+            <h3>Programming</h3>
+            <p>Python, C, C++, Rust, TypeScript, SystemVerilog, R, SQL</p>
+            <span class="skill-note">次に勉強したい言語はGo, Haskell, Verylです。</span>
+          </div>
+          <div class="skill-card">
+            <h3>AI / LLM</h3>
+            <span class="skill-note">GPT-4が登場した2023年春から2年ほど追い続けています。最近の興味はローカルLLMに向いています。</span>
+          </div>
+          <div class="skill-card">
+            <h3>Web frameworks</h3>
+            <p>FastAPI, Next.js, Flask, Django</p>
+            <span class="skill-note">必要に応じて各種コーディングエージェントを活用しつつ、自分の頭で理解することを心がけています。</span>
+          </div>
+          <div class="skill-card">
+            <h3>Low-level</h3>
+            <p>CPU・コンパイラ（自作経験あり）</p>
+            <span class="skill-note">研究のためQEMUやgem5を習得しています。<br>現在は趣味でOS・ハイパバイザの自作にも取り組んでいます。</span>
+          </div>
+          <div class="skill-card">
+            <h3>Data &amp; Optimization</h3>
+            <p>NumPy, Pandas, scikit-learn, matplotlib, NetworkX</p>
+            <span class="skill-note">Graph-RAG、最適化アルゴリズム、可視化</span>
+          </div>
+          <div class="skill-card">
+            <h3>Infra</h3>
+            <p>Docker, GitHub Actions, terraform, Cloudflare, AWS</p>
+            <span class="skill-note">このページはterraformで管理されたEC2インスタンス上にホストされています。</span>
+          </div>
+          <div class="skill-card">
+            <h3>Languages</h3>
+            <p>日本語（母語） </p>
+            <p>英語（TOEIC 715点）</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="achievements">
+        <div class="section__header">
+          <h2>Achievements</h2>
+        </div>
+        <div class="highlight-card">
+          <h3>CBP2025 優勝</h3>
+          <p>コンピュータアーキテクチャ分野の国際学会ISCA2025にて併催された、分岐予測アルゴリズムの精度を競うコンペティションです。私は2025年3月から5月にかけてチームに参加し、既存の分岐予測器の解析を担当しました。</p>
+        </div>
+      </section>
+
+      <section class="section" id="activities">
+        <div class="section__header">
+          <h2>Hobbies</h2>
+        </div>
+        <div class="skill-grid hobby-grid">
+          <div class="skill-card">
+            <h3>Music</h3>
+            <p>・楽器（ピアノ・ホルン・アコースティックギター）</p>
+            <p>・DTM（Logic Pro）</p>
+          </div>
+          <div class="skill-card">
+            <h3>Rhythm Games</h3>
+            <p>・アーケード・スマホ音ゲーを幅広くプレイ。</p>
+            <span class="skill-note">統計ツールや譜面の生成など、技術と音ゲーの融合にも興味があります。</span>
+          </div>
+          <div class="skill-card">
+            <h3>Board Games</h3>
+            <p>・将棋（将棋ウォーズ2級）</p><p>・チェス（rating 1000）</p>
+          </div>
+          <div class="skill-card">
+            <h3>PC Games</h3>
+            <p>東方、Terraria、Minecraft（工業化Mod）、Getting Over It、Factorio、Civilization V</p>
+            <span class="skill-note">効率化の余地があるゲームが好きです。</span>
+          </div>
+        </div>
+      </section>
 
     <footer class="footer">
       <span>&copy; <span id="year"></span> Maru65536</span>
